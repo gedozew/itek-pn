@@ -35,10 +35,10 @@ clear;clear;clear
 
   # // Banner
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  Welcome To AmztoreTnl ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
+echo -e "  Welcome To Cyber_Sufi ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
 echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}Amztore® ${NC}${YELLOW}(${NC} ${green} AmztoreTnl${NC}${YELLOW})${NC}"
-echo -e " © Recode By My Amztore Tnl${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
+echo -e "  Auther : ${green}Cyber_Sufi® ${NC}${YELLOW}(${NC} ${green} Cyber_Sufi${NC}${YELLOW})${NC}"
+echo -e " © Recode By Cyber_Sufi ${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo ""
 sleep 2
@@ -237,6 +237,9 @@ function pasang_domain() {
 
 # Fungsi pengaturan HAProxy dan Nginx setelah memasukkan domain
 function first_setup() {
+    # Pastikan domain sudah dimasukkan di sini
+    pasang_domain
+
     print_install "Mengatur timezone dan environment sistem"
     timedatectl set-timezone Asia/Jakarta
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
@@ -293,40 +296,13 @@ function first_setup() {
     # Gabungkan sertifikat dan key menjadi satu file hap.pem
     echo "Menggabungkan xray.crt dan xray.key menjadi hap.pem untuk HAProxy..."
     cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
-
-    # Restart HAProxy dan Nginx untuk menerapkan konfigurasi baru
-    echo "Restart HAProxy dan Nginx untuk menerapkan konfigurasi baru..."
-    sudo systemctl restart haproxy
-    sudo systemctl restart nginx
-
-    # Cek status HAProxy dan Nginx
-    sudo systemctl status haproxy
-    sudo systemctl status nginx
-}
-
-# GEO PROJECT
-clear
-
-# Fungsi instalasi Nginx
-function nginx_install() {
-    # Checking System
-    if [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "ubuntu" ]]; then
-        print_install "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        sudo apt-get install nginx -y
-    elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "debian" ]]; then
-        print_success "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        apt -y install nginx
-    else
-        echo -e " Your OS Is Not Supported ( ${YELLOW}$(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')${FONT} )"
-        # exit 1
-    fi
 }
 
 # Update and remove packages
 function base_package() {
     clear
     ########
-    print_install "Menginstall Packet Yang Dibutuhkan"
+    print_install "Menginstall Paket Yang Dibutuhkan"
     apt install zip pwgen openssl netcat socat cron bash-completion -y
     apt install figlet -y
     apt update -y
@@ -351,8 +327,8 @@ function base_package() {
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
     sudo apt-get install -y speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ python htop lsof tar wget curl ruby zip unzip p7zip-full python3-pip libc6 util-linux build-essential msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools openssl ca-certificates gnupg gnupg2 ca-certificates lsb-release gcc shc make cmake git screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq openvpn easy-rsa
     print_success "Packet Yang Dibutuhkan"
-    
 }
+
 clear
 
 #GANTI PASSWORD DEFAULT
@@ -372,7 +348,7 @@ restart_system() {
 <code>Exp Sc : </code><code>$EXPSC</code>
 <code>────────────────────</code>
 <i>Automatic Notification from Github</i>
-"'&reply_markup={"inline_keyboard":[[{"text":"ᴏʀᴅᴇʀ🐳","url":"https://t.me/LunaticTunnel"},{"text":"ɪɴꜱᴛᴀʟʟ🐬","url":"https://t.me/LNTC_BOT"}]]}'
+"'&reply_markup={"inline_keyboard":[[{"text":"ᴏʀᴅᴇʀ🐳","url":"https://t.me/aburifat76"},{"text":"ɪɴꜱᴛᴀʟʟ🐬","url":"https://t.me/aburifat76"}]]}'
     curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
 }
 clear
