@@ -203,7 +203,39 @@ print_install "Membuat direktori xray"
     export Arch=$( uname -m )
     export IP=$( curl -s https://ipinfo.io/ip/ )
 
-# Change Environment System
+
+# Fungsi input domain
+function pasang_domain() {
+    echo -e ""
+    clear
+    echo -e "   .----------------------------------."
+    echo -e "   |\e[1;32mPlease Select a Domain Type Below \e[0m|"
+    echo -e "   '----------------------------------'"
+    echo -e "     \e[1;32m1)\e[0m Domain Sendiri"
+    echo -e "     \e[1;32m2)\e[0m Gunakan Domain Random Khusus Digital ocean ISP LAIN ✖️ "
+    echo -e "   ------------------------------------"
+    read -p "   Please select numbers 1-2 or Any Button(Random) : " host
+    echo ""
+    
+    if [[ $host == "1" ]]; then
+        echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
+        read -p "   Subdomain: " host1
+        echo "IP=" >> /var/lib/kyt/ipvps.conf
+        echo $host1 > /etc/xray/domain
+        echo $host1 > /root/domain
+        echo ""
+    elif [[ $host == "2" ]]; then
+        # install cf (Cloudflare)
+        wget ${REPO}limit/cf.sh && chmod +x cf.sh && ./cf.sh
+        rm -f /root/cf.sh
+        clear
+    else
+        print_install "Random Subdomain/Domain is Used"
+        clear
+    fi
+}
+
+# Fungsi pengaturan HAProxy dan Nginx setelah memasukkan domain
 function first_setup() {
     print_install "Mengatur timezone dan environment sistem"
     timedatectl set-timezone Asia/Jakarta
@@ -250,6 +282,9 @@ function first_setup() {
     fi
     print_success "File haproxy.cfg berhasil diunduh dan disalin ke /etc/haproxy/"
 
+    # Ambil domain yang sudah dimasukkan di bagian sebelumnya
+    domain=$(cat /etc/xray/domain)
+
     # Ganti placeholder xxx dengan domain pada file konfigurasi
     echo "Mengganti placeholder xxx dengan domain pada file konfigurasi..."
     sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
@@ -271,18 +306,19 @@ function first_setup() {
 
 # GEO PROJECT
 clear
+
+# Fungsi instalasi Nginx
 function nginx_install() {
-    # // Checking System
+    # Checking System
     if [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "ubuntu" ]]; then
         print_install "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        # // sudo add-apt-repository ppa:nginx/stable -y 
-        sudo apt-get install nginx -y 
+        sudo apt-get install nginx -y
     elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g') == "debian" ]]; then
         print_success "Setup nginx For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')"
-        apt -y install nginx 
+        apt -y install nginx
     else
         echo -e " Your OS Is Not Supported ( ${YELLOW}$(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')${FONT} )"
-        # // exit 1
+        # exit 1
     fi
 }
 
@@ -318,37 +354,7 @@ function base_package() {
     
 }
 clear
-# Fungsi input domain
-function pasang_domain() {
-echo -e ""
-clear
-    echo -e "   .----------------------------------."
-echo -e "   |\e[1;32mPlease Select a Domain Type Below \e[0m|"
-echo -e "   '----------------------------------'"
-echo -e "     \e[1;32m1)\e[0m Domain Sendiri"
-echo -e "     \e[1;32m2)\e[0m Gunakan Domain Random Khusus Digital ocean ISP LAIN ✖️ "
-echo -e "   ------------------------------------"
-read -p "   Please select numbers 1-2 or Any Button(Random) : " host
-echo ""
-if [[ $host == "1" ]]; then
-echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
-read -p "   Subdomain: " host1
-echo "IP=" >> /var/lib/kyt/ipvps.conf
-echo $host1 > /etc/xray/domain
-echo $host1 > /root/domain
-echo ""
-elif [[ $host == "2" ]]; then
-#install cf
-wget ${REPO}limit/cf.sh && chmod +x cf.sh && ./cf.sh
-rm -f /root/cf.sh
-clear
-else
-print_install "Random Subdomain/Domain is Used"
-clear
-    fi
-}
 
-clear
 #GANTI PASSWORD DEFAULT
 restart_system() {
     USRSC=$(wget -qO- https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $ipsaya | awk '{print $2}')
