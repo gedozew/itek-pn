@@ -214,13 +214,14 @@ function first_setup() {
     OS_ID=$(grep -w ID /etc/os-release | cut -d= -f2 | tr -d '"')
     OS_NAME=$(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
 
+    # Pemasangan HAProxy dan Nginx sesuai OS
     if [[ "$OS_ID" == "ubuntu" ]]; then
         echo -e "${YELLOW}Setup Dependencies untuk $OS_NAME${NC}"
         apt update -y
         apt-get install --no-install-recommends software-properties-common -y
         add-apt-repository ppa:vbernat/haproxy-2.0 -y
         apt-get update -y
-        apt-get install -y haproxy
+        apt-get install -y haproxy nginx
 
     elif [[ "$OS_ID" == "debian" ]]; then
         echo -e "${YELLOW}Setup Dependencies untuk $OS_NAME${NC}"
@@ -230,31 +231,42 @@ function first_setup() {
             http://haproxy.debian.net buster-backports-1.8 main \
             >/etc/apt/sources.list.d/haproxy.list
         apt-get update -y
-        apt-get install -y haproxy
+        apt-get install -y haproxy nginx
     else
         echo -e "${RED}OS tidak didukung: $OS_NAME${NC}"
         exit 1
     fi
 
-    # Mengunduh file haproxy.cfg dari repositori GitHub milikmu
+    # Mengunduh file haproxy.cfg dan konfigurasi lainnya dari GitHub milikmu
     echo "Mengunduh file haproxy.cfg dari GitHub milikmu..."
     wget -O /etc/haproxy/haproxy.cfg "https://github.com/gedozew/itek-pn/raw/main/limit/haproxy.cfg"
+    wget -O /etc/nginx/conf.d/xray.conf "https://github.com/gedozew/itek-pn/raw/main/limit/xray.conf"
+    wget -O /etc/nginx/nginx.conf "https://github.com/gedozew/itek-pn/raw/main/limit/nginx.conf"
 
     # Verifikasi apakah haproxy.cfg telah diunduh
-    if [[ -f /etc/haproxy/haproxy.cfg ]]; then
-        print_success "File haproxy.cfg berhasil diunduh dan disalin ke /etc/haproxy/"
-    else
+    if [[ ! -f /etc/haproxy/haproxy.cfg ]]; then
         echo -e "${RED}Gagal mengunduh haproxy.cfg dari GitHub.${NC}"
         exit 1
     fi
+    print_success "File haproxy.cfg berhasil diunduh dan disalin ke /etc/haproxy/"
 
-    # Restart HAProxy untuk menerapkan konfigurasi baru
-    echo "Restart HAProxy untuk menerapkan konfigurasi baru..."
+    # Ganti placeholder xxx dengan domain pada file konfigurasi
+    echo "Mengganti placeholder xxx dengan domain pada file konfigurasi..."
+    sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
+    sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
+
+    # Gabungkan sertifikat dan key menjadi satu file hap.pem
+    echo "Menggabungkan xray.crt dan xray.key menjadi hap.pem untuk HAProxy..."
+    cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
+
+    # Restart HAProxy dan Nginx untuk menerapkan konfigurasi baru
+    echo "Restart HAProxy dan Nginx untuk menerapkan konfigurasi baru..."
     sudo systemctl restart haproxy
-    sudo systemctl enable haproxy
+    sudo systemctl restart nginx
 
-    # Cek status HAProxy
+    # Cek status HAProxy dan Nginx
     sudo systemctl status haproxy
+    sudo systemctl status nginx
 }
 
 # GEO PROJECT
