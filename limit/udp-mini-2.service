@@ -1,16 +1,12 @@
 [Unit]
-Description=UDP 7100 (Badvpn UDPGW 2)
-Documentation=https://github.com/ambrop72/badvpn
-After=syslog.target network-online.target
+Description=UDPGW Gateway 7200 by mr.vybes
+After=network.target
 
 [Service]
+Type=simple
+ExecStart=/usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 1000 --max-connections-for-client 100
+Restart=always
 User=root
-NoNewPrivileges=true
-ExecStart=/usr/local/kyt/badvpn-udpgw --listen-addr 127.0.0.1:7102 --max-clients 500
-Restart=on-failure
-RestartPreventExitStatus=23
-LimitNPROC=10000
-LimitNOFILE=1000000
 
 [Install]
 WantedBy=multi-user.target
