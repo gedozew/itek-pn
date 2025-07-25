@@ -979,13 +979,11 @@ print_install "Enable Service"
 # Fingsi Install Script
 function instal(){
 clear
-    first_setup
-    nginx_install
-    base_package
-    make_folder_xray
     pasang_domain
-    password_default
+    first_setup
+    base_package
     pasang_ssl
+    make_folder_xray
     install_xray
     ssh
     udp_mini
@@ -994,7 +992,7 @@ clear
     ins_dropbear
     ins_vnstat
     ins_openvpn
-    ins_backup
+    ins_backup   
     ins_swab
     ins_Fail2ban
     ins_epro
