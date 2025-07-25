@@ -35,10 +35,10 @@ clear;clear;clear
 
   # // Banner
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  Welcome To Cyber_Sufi ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
+echo -e "  Welcome To AmztoreTnl ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
 echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}Cyber_Sufi® ${NC}${YELLOW}(${NC} ${green} Cyber_Sufi${NC}${YELLOW})${NC}"
-echo -e " © Recode By Cyber_Sufi ${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
+echo -e "  Auther : ${green}Amztore® ${NC}${YELLOW}(${NC} ${green} AmztoreTnl${NC}${YELLOW})${NC}"
+echo -e " © Recode By My Amztore Tnl${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo ""
 sleep 2
@@ -203,53 +203,43 @@ print_install "Membuat direktori xray"
     export Arch=$( uname -m )
     export IP=$( curl -s https://ipinfo.io/ip/ )
 
-
-# Fungsi input domain
-function pasang_domain() {
-    echo -e ""
-    clear
-    echo -e "   .----------------------------------."
-    echo -e "   |\e[1;32mPlease Select a Domain Type Below \e[0m|"
-    echo -e "   '----------------------------------'"
-    echo -e "     \e[1;32m1)\e[0m Domain Sendiri"
-    echo -e "     \e[1;32m2)\e[0m Gunakan Domain Random Khusus Digital ocean ISP LAIN ✖️ "
-    echo -e "   ------------------------------------"
-    read -p "   Please select numbers 1-2 or Any Button(Random) : " host
-    echo ""
-    
-    if [[ $host == "1" ]]; then
-        echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
-        read -p "   Subdomain: " host1
-        echo "IP=" >> /var/lib/kyt/ipvps.conf
-        echo $host1 > /etc/xray/domain
-        echo $host1 > /root/domain
-        echo ""
-    elif [[ $host == "2" ]]; then
-        # install cf (Cloudflare)
-        wget ${REPO}limit/cf.sh && chmod +x cf.sh && ./cf.sh
-        rm -f /root/cf.sh
-        clear
-    else
-        print_install "Random Subdomain/Domain is Used"
-        clear
-    fi
-}
-
-# Fungsi pengaturan HAProxy dan Nginx setelah memasukkan domain
-function first_setup() {
-    # Pastikan domain sudah dimasukkan di sini
-    pasang_domain
-
-    print_install "Mengatur timezone dan environment sistem"
+# Change Environment System
+# Fungsi untuk mengatur sistem dan menginstal HAProxy
+function first_setup(){
     timedatectl set-timezone Asia/Jakarta
     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-    print_success "Direktori Xray dan log berhasil disiapkan"
-
+    print_success "Directory Xray"
+    
+    # Menyimpan ID dan nama OS terlebih dahulu
     OS_ID=$(grep -w ID /etc/os-release | cut -d= -f2 | tr -d '"')
     OS_NAME=$(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
 
-    # Pemasangan HAProxy dan Nginx sesuai OS
+    if [[ "$OS_ID" == "ubuntu" ]]; then
+        echo "Setup Dependencies untuk $OS_NAME"
+        sudo apt update -y
+        apt-get install --no-install-recommends software-properties-common -y
+        add-apt-repository ppa:vbernat/haproxy-2.0 -y
+        apt-get update -y
+        apt-get -y install haproxy=2.0.*
+
+    elif [[ "$OS_ID" == "debian" ]]; then
+        echo "Setup Dependencies untuk $OS_NAME"
+        curl https://haproxy.debian.net/bernat.debian.org.gpg | gpg --dearmor >/usr/share/keyrings/haproxy.debian.net.gpg
+        echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
+            http://haproxy.debian.net buster-backports-1.8 main \
+            >/etc/apt/sources.list.d/haproxy.list
+        sudo apt-get update
+        apt-get -y install haproxy=1.8.*
+    else
+        echo -e "Your OS is not supported: $OS_NAME"
+        exit 1
+    fi
+}
+
+# GEO PROJECT: Install Nginx dan HAProxy sesuai dengan OS
+function nginx_install() {
+    # Pastikan OS_ID dan OS_NAME sudah didefinisikan di awal script
     if [[ "$OS_ID" == "ubuntu" ]]; then
         echo -e "${YELLOW}Setup Dependencies untuk $OS_NAME${NC}"
         apt update -y
@@ -260,8 +250,7 @@ function first_setup() {
 
     elif [[ "$OS_ID" == "debian" ]]; then
         echo -e "${YELLOW}Setup Dependencies untuk $OS_NAME${NC}"
-        curl https://haproxy.debian.net/bernat.debian.org.gpg |
-            gpg --dearmor >/usr/share/keyrings/haproxy.debian.net.gpg
+        curl https://haproxy.debian.net/bernat.debian.org.gpg | gpg --dearmor >/usr/share/keyrings/haproxy.debian.net.gpg
         echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
             http://haproxy.debian.net buster-backports-1.8 main \
             >/etc/apt/sources.list.d/haproxy.list
@@ -271,38 +260,23 @@ function first_setup() {
         echo -e "${RED}OS tidak didukung: $OS_NAME${NC}"
         exit 1
     fi
+}
 
-    # Mengunduh file haproxy.cfg dan konfigurasi lainnya dari GitHub milikmu
-    echo "Mengunduh file haproxy.cfg dari GitHub milikmu..."
-    wget -O /etc/haproxy/haproxy.cfg "https://github.com/gedozew/itek-pn/raw/main/limit/haproxy.cfg"
-    wget -O /etc/nginx/conf.d/xray.conf "https://github.com/gedozew/itek-pn/raw/main/limit/xray.conf"
-    wget -O /etc/nginx/nginx.conf "https://github.com/gedozew/itek-pn/raw/main/limit/nginx.conf"
-
-    # Verifikasi apakah haproxy.cfg telah diunduh
-    if [[ ! -f /etc/haproxy/haproxy.cfg ]]; then
-        echo -e "${RED}Gagal mengunduh haproxy.cfg dari GitHub.${NC}"
+# Pengecekan dan Verifikasi apakah HAProxy dan Nginx sudah terinstal
+function verify_installation() {
+    if ! command -v haproxy &> /dev/null || ! command -v nginx &> /dev/null; then
+        echo -e "${RED}HAProxy atau Nginx gagal diinstal.${NC}"
         exit 1
+    else
+        echo -e "${GREEN}HAProxy dan Nginx berhasil diinstal.${NC}"
     fi
-    print_success "File haproxy.cfg berhasil diunduh dan disalin ke /etc/haproxy/"
-
-    # Ambil domain yang sudah dimasukkan di bagian sebelumnya
-    domain=$(cat /etc/xray/domain)
-
-    # Ganti placeholder xxx dengan domain pada file konfigurasi
-    echo "Mengganti placeholder xxx dengan domain pada file konfigurasi..."
-    sed -i "s/xxx/${domain}/g" /etc/haproxy/haproxy.cfg
-    sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
-
-    # Gabungkan sertifikat dan key menjadi satu file hap.pem
-    echo "Menggabungkan xray.crt dan xray.key menjadi hap.pem untuk HAProxy..."
-    cat /etc/xray/xray.crt /etc/xray/xray.key | tee /etc/haproxy/hap.pem
 }
 
 # Update and remove packages
 function base_package() {
     clear
     ########
-    print_install "Menginstall Paket Yang Dibutuhkan"
+    print_install "Menginstall Packet Yang Dibutuhkan"
     apt install zip pwgen openssl netcat socat cron bash-completion -y
     apt install figlet -y
     apt update -y
@@ -327,10 +301,40 @@ function base_package() {
     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
     sudo apt-get install -y speedtest-cli vnstat libnss3-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev libcurl4-nss-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ python htop lsof tar wget curl ruby zip unzip p7zip-full python3-pip libc6 util-linux build-essential msmtp-mta ca-certificates bsd-mailx iptables iptables-persistent netfilter-persistent net-tools openssl ca-certificates gnupg gnupg2 ca-certificates lsb-release gcc shc make cmake git screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq openvpn easy-rsa
     print_success "Packet Yang Dibutuhkan"
+    
+}
+clear
+# Fungsi input domain
+function pasang_domain() {
+echo -e ""
+clear
+    echo -e "   .----------------------------------."
+echo -e "   |\e[1;32mPlease Select a Domain Type Below \e[0m|"
+echo -e "   '----------------------------------'"
+echo -e "     \e[1;32m1)\e[0m Domain Sendiri"
+echo -e "     \e[1;32m2)\e[0m Gunakan Domain Random Khusus Digital ocean ISP LAIN ✖️ "
+echo -e "   ------------------------------------"
+read -p "   Please select numbers 1-2 or Any Button(Random) : " host
+echo ""
+if [[ $host == "1" ]]; then
+echo -e "   \e[1;32mPlease Enter Your Subdomain $NC"
+read -p "   Subdomain: " host1
+echo "IP=" >> /var/lib/kyt/ipvps.conf
+echo $host1 > /etc/xray/domain
+echo $host1 > /root/domain
+echo ""
+elif [[ $host == "2" ]]; then
+#install cf
+wget ${REPO}limit/cf.sh && chmod +x cf.sh && ./cf.sh
+rm -f /root/cf.sh
+clear
+else
+print_install "Random Subdomain/Domain is Used"
+clear
+    fi
 }
 
 clear
-
 #GANTI PASSWORD DEFAULT
 restart_system() {
     USRSC=$(wget -qO- https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $ipsaya | awk '{print $2}')
@@ -348,7 +352,7 @@ restart_system() {
 <code>Exp Sc : </code><code>$EXPSC</code>
 <code>────────────────────</code>
 <i>Automatic Notification from Github</i>
-"'&reply_markup={"inline_keyboard":[[{"text":"ᴏʀᴅᴇʀ🐳","url":"https://t.me/aburifat76"},{"text":"ɪɴꜱᴛᴀʟʟ🐬","url":"https://t.me/aburifat76"}]]}'
+"'&reply_markup={"inline_keyboard":[[{"text":"ᴏʀᴅᴇʀ🐳","url":"https://t.me/LunaticTunnel"},{"text":"ɪɴꜱᴛᴀʟʟ🐬","url":"https://t.me/LNTC_BOT"}]]}'
     curl -s --max-time $TIMES -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html" $URL >/dev/null
 }
 clear
@@ -617,10 +621,10 @@ systemctl enable trip
 #SERVICE LIMIT QUOTA
 
 #SERVICE VMESS
-# // Installing BadVPN UDP Gateway (badvpn-udpgw)
+# // Installing UDP Mini
 mkdir -p /usr/local/kyt/
-wget -q -O /usr/local/kyt/badvpn-udpgw "${REPO}limit/badvpn-udpgw"
-chmod +x /usr/local/kyt/badvpn-udpgw
+wget -q -O /usr/local/kyt/udp-mini "${REPO}limit/udp-mini"
+chmod +x /usr/local/kyt/udp-mini
 wget -q -O /etc/systemd/system/udp-mini-1.service "${REPO}limit/udp-mini-1.service"
 wget -q -O /etc/systemd/system/udp-mini-2.service "${REPO}limit/udp-mini-2.service"
 wget -q -O /etc/systemd/system/udp-mini-3.service "${REPO}limit/udp-mini-3.service"
@@ -979,11 +983,12 @@ print_install "Enable Service"
 # Fingsi Install Script
 function instal(){
 clear
-    pasang_domain
     first_setup
     nginx_install
+    verify_installation
     base_package
     make_folder_xray
+    pasang_domain
     password_default
     pasang_ssl
     install_xray
