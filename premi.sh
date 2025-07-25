@@ -981,9 +981,11 @@ function instal(){
 clear
     pasang_domain
     first_setup
+    nginx_install
     base_package
-    pasang_ssl
     make_folder_xray
+    password_default
+    pasang_ssl
     install_xray
     ssh
     udp_mini
@@ -992,7 +994,7 @@ clear
     ins_dropbear
     ins_vnstat
     ins_openvpn
-    ins_backup   
+    ins_backup
     ins_swab
     ins_Fail2ban
     ins_epro
