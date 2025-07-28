@@ -93,8 +93,7 @@ clear
 MYIP=$(curl -sS ipv4.icanhazip.com)
 echo -e "\e[32mloading...\e[0m" 
 clear
-# Version sc
-clear
+
 #########################
 # USERNAME
 rm -f /usr/bin/user
