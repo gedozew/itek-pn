@@ -1,12 +1,16 @@
 [Unit]
-Description=UDPGW Gateway 7300 by mr.vybes
-After=network.target
+Description=UDP 7300
+Documentation=https://geovpn.net
+After=syslog.target network-online.target
 
 [Service]
-Type=simple
-ExecStart=/usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000 --max-connections-for-client 100
-Restart=always
 User=root
+NoNewPrivileges=true
+ExecStart=/usr/local/kyt/udp-mini --listen-addr 127.0.0.1:7300 --max-clients 500
+Restart=on-failure
+RestartPreventExitStatus=23
+LimitNPROC=10000
+LimitNOFILE=1000000
 
 [Install]
 WantedBy=multi-user.target
