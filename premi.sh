@@ -62,11 +62,28 @@ else
     exit 1
 fi
 
+#IZIN SCRIPT
+MYIP=$(curl -sS ipv4.icanhazip.com)
+echo -e "\e[32mloading...\e[0m" 
+clear
+
 # // IP Address Validating
-if [[ $ipsaya == "" ]]; then
+if [[ $MYIP == "" ]]; then
     echo -e "${EROR} IP Address ( ${YELLOW}Not Detected${NC} )"
 else
-    echo -e "${OK} IP Address ( ${green}$IP${NC} )"
+    echo -e "${OK} IP Address ( ${green}$MYIP${NC} )"
+fi
+
+# CEK MASA AKTIF LISENSI
+today=$(date -d "0 days" +"%Y-%m-%d")
+Exp1=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $4}')
+
+if [[ $today > $Exp1 ]]; then
+    echo -e "${RED}─────────────────────────────${NC}"
+    echo -e "${RED}   ❌ SCRIPT SUDAH EXPIRED ❌   ${NC}"
+    echo -e "${RED}─────────────────────────────${NC}"
+    echo -e "Silakan perpanjang lisensi ke @LunaticTunnel atau @LNTC_BOT"
+    exit 1
 fi
 
 # // Validate Successfull
@@ -74,25 +91,22 @@ echo ""
 read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation") "
 echo ""
 clear
+
+# CEK ROOT & VIRTUAL
 if [ "${EUID}" -ne 0 ]; then
-		echo "You need to run this script as root"
-		exit 1
+    echo "You need to run this script as root"
+    exit 1
 fi
 if [ "$(systemd-detect-virt)" == "openvz" ]; then
-		echo "OpenVZ is not supported"
-		exit 1
+    echo "OpenVZ is not supported"
+    exit 1
 fi
+
+# Color
 red='\e[1;31m'
 green='\e[0;32m'
 NC='\e[0m'
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m"
-clear
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m" 
-clear
+
 # Version sc
 clear
 #########################
