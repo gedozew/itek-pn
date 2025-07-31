@@ -1,8 +1,7 @@
 #!/bin/bash
-### Color
-apt upgrade -y
-apt update -y
-apt install curls
+### Color & Preparation
+apt update -y && apt upgrade -y
+apt install curl -y
 apt install wondershaper -y
 Green="\e[92;1m"
 RED="\033[31m"
@@ -15,70 +14,34 @@ OK="${Green}--->${FONT}"
 ERROR="${RED}[ERROR]${FONT}"
 GRAY="\e[1;30m"
 NC='\e[0m'
-red='\e[1;31m'
-green='\e[0;32m'
-TIME=$(date '+%d %b %Y')
-ipsaya=$(wget -qO- ipinfo.io/ip)
-TIMES="10"
+
+# Info Telegram
 CHATID="6617783693"
 KEY="6751589620:AAHwjP6dzZhuqeyUOdYFc6742Q1YUVF1EjM"
 URL="https://api.telegram.org/bot$KEY/sendMessage"
-# ===================
-clear
-  # // Exporint IP AddressInformation
-export IP=$( curl -sS icanhazip.com )
 
-# // Clear Data
-clear
-clear && clear && clear
-clear;clear;clear
-
-  # // Banner
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo -e "  Welcome To Aburifat ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
-echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}CyberSufi ${NC}${YELLOW}(${NC} ${green} CyberSufi${NC}${YELLOW})${NC}"
-echo -e " © Recode By Mod CyberSufi${YELLOW}(${NC} 2025 ${YELLOW})${NC}"
-echo -e "${YELLOW}----------------------------------------------------------${NC}"
-echo ""
-sleep 2
-###### IZIN SC 
-
-# // Checking Os Architecture
-if [[ $( uname -m | awk '{print $1}' ) == "x86_64" ]]; then
-    echo -e "${OK} Your Architecture Is Supported ( ${green}$( uname -m )${NC} )"
-else
-    echo -e "${EROR} Your Architecture Is Not Supported ( ${YELLOW}$( uname -m )${NC} )"
-    exit 1
-fi
-
-# // Checking System
-if [[ $( cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g' ) == "ubuntu" ]]; then
-    echo -e "${OK} Your OS Is Supported ( ${green}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-elif [[ $( cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g' ) == "debian" ]]; then
-    echo -e "${OK} Your OS Is Supported ( ${green}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-else
-    echo -e "${EROR} Your OS Is Not Supported ( ${YELLOW}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-    exit 1
-fi
-
-#IZIN SCRIPT
+# Cek IP
 MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m" 
 clear
-
-# // IP Address Validating
-if [[ $MYIP == "" ]]; then
-    echo -e "${EROR} IP Address ( ${YELLOW}Not Detected${NC} )"
+if [[ -z "$MYIP" ]]; then
+    echo -e "${ERROR} IP Address ( ${YELLOW}Not Detected${NC} )"
+    exit 1
 else
     echo -e "${OK} IP Address ( ${green}$MYIP${NC} )"
 fi
 
-# CEK MASA AKTIF LISENSI
+# Validasi Lisensi
 today=$(date -d "0 days" +"%Y-%m-%d")
-Exp1=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $4}')
+cekdata=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP)
+username=$(echo "$cekdata" | awk '{print $2}')
+expdate=$(echo "$cekdata" | awk '{print $3}')
 
-if [[ $today > $Exp1 ]]; then
+if [[ -z "$expdate" ]]; then
+    echo -e "${RED} IP Tidak Terdaftar!${NC}"
+    exit 1
+fi
+
+if [[ "$today" > "$expdate" ]]; then
     echo -e "${RED}─────────────────────────────${NC}"
     echo -e "${RED}   ❌ SCRIPT SUDAH EXPIRED ❌   ${NC}"
     echo -e "${RED}─────────────────────────────${NC}"
@@ -86,108 +49,53 @@ if [[ $today > $Exp1 ]]; then
     exit 1
 fi
 
-# // Validate Successfull
-echo ""
-read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation") "
-echo ""
+# Hitung Sisa Hari Aktif
+d1=$(date -d "$expdate" +%s)
+d2=$(date -d "$today" +%s)
+sisa_hari=$(( (d1 - d2) / 86400 ))
+
+# Simpan Data User & Expired
+echo "$username" > /usr/bin/user
+echo "$expdate" > /usr/bin/e
+
+# Tampilkan Status
+echo -e "${OK} Username  : ${green}$username${NC}"
+echo -e "${OK} Expired   : ${green}$expdate${NC}"
+echo -e "${OK} Sisa Hari : ${green}$sisa_hari Hari${NC}"
+
+# Tampilkan prompt
+read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} Untuk melanjutkan instalasi") "
 clear
 
-# CEK ROOT & VIRTUAL
+# Cek Root dan OpenVZ
 if [ "${EUID}" -ne 0 ]; then
-    echo "You need to run this script as root"
+    echo -e "${ERROR} Harus dijalankan sebagai root"
     exit 1
 fi
 if [ "$(systemd-detect-virt)" == "openvz" ]; then
-    echo "OpenVZ is not supported"
+    echo -e "${ERROR} OpenVZ tidak didukung"
     exit 1
 fi
 
-# Color
-red='\e[1;31m'
-green='\e[0;32m'
-NC='\e[0m'
+# Informasi VPS
+tanggal=$(date -d "0 days" +"%d-%m-%Y - %X")
+OS_Name=$(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
+Kernel=$(uname -r)
+Arch=$(uname -m)
 
-# Version sc
-clear
-#########################
-# USERNAME
-rm -f /usr/bin/user
-username=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $2}')
-echo "$username" >/usr/bin/user
-expx=$(curl https://raw.githubusercontent.com/gedozew/Regist/mainr/afk | grep $MYIP | awk '{print $3}')
-echo "$expx" >/usr/bin/e
-# DETAIL ORDER
-username=$(cat /usr/bin/user)
-oid=$(cat /usr/bin/ver)
-exp=$(cat /usr/bin/e)
-clear
-# CERTIFICATE STATUS
-d1=$(date -d "$valid" +%s)
-d2=$(date -d "$today" +%s)
-certifacate=$(((d1 - d2) / 86400))
-# VPS Information
-DATE=$(date +'%Y-%m-%d')
-datediff() {
-    d1=$(date -d "$1" +%s)
-    d2=$(date -d "$2" +%s)
-    echo -e "$COLOR1 $NC Expiry In   : $(( (d1 - d2) / 86400 )) Days"
-}
-mai="datediff "$Exp" "$DATE""
+# Simpan IP VPS
+mkdir -p /etc/xray
+echo "$MYIP" > /etc/xray/ipvps
 
-# Status ExpiRED Active | Geo Project
-Info="(${green}Active${NC})"
-Error="(${RED}ExpiRED${NC})"
-today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $4}')
-if [[ $today < $Exp1 ]]; then
-sts="${Info}"
-else
-sts="${Error}"
-fi
-echo -e "\e[32mloading...\e[0m"
-clear
-# REPO    
-    REPO="https://raw.githubusercontent.com/gedozew/itek-pn/main/"
+# Cetak informasi awal
+echo -e "${YELLOW}----------------------------------------------------------${NC}"
+echo -e "  Welcome To Aburifat ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
+echo -e " This Will Quick Setup VPN Server On Your Server"
+echo -e "  Author : ${green}CyberSufi ${NC}${YELLOW}(${NC}${green} CyberSufi${NC}${YELLOW})${NC}"
+echo -e " © Recode By Mod CyberSufi ${YELLOW}(2025)${NC}"
+echo -e "${YELLOW}----------------------------------------------------------${NC}"
 
-####
-start=$(date +%s)
-secs_to_human() {
-    echo "Installation time : $((${1} / 3600)) hours $(((${1} / 60) % 60)) minute's $((${1} % 60)) seconds"
-}
-### Status
-function print_ok() {
-    echo -e "${OK} ${BLUE} $1 ${FONT}"
-}
-function print_install() {
-	echo -e "${green} =============================== ${FONT}"
-    echo -e "${YELLOW} # $1 ${FONT}"
-	echo -e "${green} =============================== ${FONT}"
-    sleep 1
-}
-
-function print_error() {
-    echo -e "${ERROR} ${REDBG} $1 ${FONT}"
-}
-
-function print_success() {
-    if [[ 0 -eq $? ]]; then
-		echo -e "${green} =============================== ${FONT}"
-        echo -e "${Green} # $1 berhasil dipasang"
-		echo -e "${green} =============================== ${FONT}"
-        sleep 2
-    fi
-}
-
-### Cek root
-function is_root() {
-    if [[ 0 == "$UID" ]]; then
-        print_ok "Root user Start installation process"
-    else
-        print_error "The current user is not the root user, please switch to the root user and run the script again"
-    fi
-
-}
-
+# Lanjut ke instalasi lainnya...
 # Buat direktori xray
 print_install "Membuat direktori xray"
     mkdir -p /etc/xray
