@@ -25,122 +25,109 @@ KEY="6751589620:AAHwjP6dzZhuqeyUOdYFc6742Q1YUVF1EjM"
 URL="https://api.telegram.org/bot$KEY/sendMessage"
 # ===================
 clear
-  # // Exporint IP AddressInformation
-export IP=$( curl -sS icanhazip.com )
+# // Export IP Address
+export IP=$(curl -sS ipv4.icanhazip.com)
 
-# // Clear Data
-clear
+# // Clear layar
 clear && clear && clear
-clear;clear;clear
 
-  # // Banner
+# // Banner
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo -e "  Welcome To AmztoreTnl ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
 echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Auther : ${green}Amztore® ${NC}${YELLOW}(${NC} ${green} AmztoreTnl${NC}${YELLOW})${NC}"
+echo -e "  Author : ${green}Amztore® ${NC}${YELLOW}(${NC} ${green} AmztoreTnl${NC}${YELLOW})${NC}"
 echo -e " © Recode By My Amztore Tnl${YELLOW}(${NC} 2023 ${YELLOW})${NC}"
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo ""
 sleep 2
-###### IZIN SC 
 
-# // Checking Os Architecture
-if [[ $( uname -m | awk '{print $1}' ) == "x86_64" ]]; then
-    echo -e "${OK} Your Architecture Is Supported ( ${green}$( uname -m )${NC} )"
+# // Cek Arsitektur
+if [[ $(uname -m) != "x86_64" ]]; then
+    echo -e "${EROR} Architecture Not Supported ( ${YELLOW}$(uname -m)${NC} )"
+    exit 1
 else
-    echo -e "${EROR} Your Architecture Is Not Supported ( ${YELLOW}$( uname -m )${NC} )"
+    echo -e "${OK} Architecture Supported ( ${green}$(uname -m)${NC} )"
+fi
+
+# // Cek Sistem Operasi
+os_id=$(grep -w ID /etc/os-release | cut -d= -f2 | tr -d '"')
+os_name=$(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
+if [[ $os_id == "ubuntu" || $os_id == "debian" ]]; then
+    echo -e "${OK} OS Supported ( ${green}$os_name${NC} )"
+else
+    echo -e "${EROR} OS Not Supported ( ${YELLOW}$os_name${NC} )"
     exit 1
 fi
 
-# // Checking System
-if [[ $( cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g' ) == "ubuntu" ]]; then
-    echo -e "${OK} Your OS Is Supported ( ${green}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-elif [[ $( cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/ID//g' ) == "debian" ]]; then
-    echo -e "${OK} Your OS Is Supported ( ${green}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-else
-    echo -e "${EROR} Your OS Is Not Supported ( ${YELLOW}$( cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g' )${NC} )"
-    exit 1
-fi
-
-# // IP Address Validating
-if [[ $ipsaya == "" ]]; then
+# // Validasi IP Address
+if [[ -z $IP ]]; then
     echo -e "${EROR} IP Address ( ${YELLOW}Not Detected${NC} )"
 else
     echo -e "${OK} IP Address ( ${green}$IP${NC} )"
 fi
 
-# // Validate Successfull
+# // Validasi Lisensi
+MYIP=$IP
+data_lisensi=$(curl -sS https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep -w $MYIP)
+
+if [[ -z $data_lisensi ]]; then
+    echo -e "\e[1;31m❌ IP ($MYIP) tidak terdaftar dalam lisensi!\e[0m"
+    exit 1
+fi
+
+# Ambil data username dan expired dari baris lisensi
+username=$(echo $data_lisensi | awk '{print $2}')
+expired_date=$(echo $data_lisensi | awk '{print $3}')
+today=$(date +%Y-%m-%d)
+
+# Simpan ke file lokal
+echo "$username" > /usr/bin/user
+echo "$expired_date" > /usr/bin/e
+
+# Hitung selisih hari
+d1=$(date -d "$expired_date" +%s)
+d2=$(date -d "$today" +%s)
+sisa_hari=$(( (d1 - d2) / 86400 ))
+
+# Cek expired
+if [[ $d2 -ge $d1 ]]; then
+    echo -e "\e[1;31m─────────────────────────────\e[0m"
+    echo -e "\e[1;31m   ❌ SCRIPT SUDAH EXPIRED ❌  \e[0m"
+    echo -e "\e[1;31m─────────────────────────────\e[0m"
+    echo -e "Tanggal Expired : $expired_date"
+    echo -e "Silakan hubungi @LunaticTunnel atau @LNTC_BOT untuk perpanjangan."
+    exit 1
+else
+    echo -e "\e[1;32m✔ LISENSI AKTIF\e[0m (Sisa $sisa_hari Hari)"
+    echo -e "Expired Pada : $expired_date"
+fi
+
+# Tunggu user sebelum lanjut
 echo ""
-read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation") "
+read -p "$(echo -e "Tekan ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} untuk melanjutkan instalasi") "
 echo ""
 clear
-if [ "${EUID}" -ne 0 ]; then
-		echo "You need to run this script as root"
-		exit 1
+
+# Cek Root dan Virtualization
+if [[ "${EUID}" -ne 0 ]]; then
+    echo "Jalankan sebagai root."
+    exit 1
 fi
-if [ "$(systemd-detect-virt)" == "openvz" ]; then
-		echo "OpenVZ is not supported"
-		exit 1
+
+if [[ "$(systemd-detect-virt)" == "openvz" ]]; then
+    echo "OpenVZ tidak didukung."
+    exit 1
 fi
+
+# Warna
 red='\e[1;31m'
 green='\e[0;32m'
 NC='\e[0m'
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m"
-clear
-#IZIN SCRIPT
-MYIP=$(curl -sS ipv4.icanhazip.com)
-echo -e "\e[32mloading...\e[0m" 
-clear
-# Version sc
-clear
-#########################
-# USERNAME
-rm -f /usr/bin/user
-username=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $2}')
-echo "$username" >/usr/bin/user
-expx=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $3}')
-echo "$expx" >/usr/bin/e
-# DETAIL ORDER
-username=$(cat /usr/bin/user)
-oid=$(cat /usr/bin/ver)
-exp=$(cat /usr/bin/e)
-clear
-# CERTIFICATE STATUS
-d1=$(date -d "$valid" +%s)
-d2=$(date -d "$today" +%s)
-certifacate=$(((d1 - d2) / 86400))
-# VPS Information
-DATE=$(date +'%Y-%m-%d')
-datediff() {
-    d1=$(date -d "$1" +%s)
-    d2=$(date -d "$2" +%s)
-    echo -e "$COLOR1 $NC Expiry In   : $(( (d1 - d2) / 86400 )) Days"
-}
-mai="datediff "$Exp" "$DATE""
 
-# Status ExpiRED Active | Geo Project
-Info="(${green}Active${NC})"
-Error="(${RED}ExpiRED${NC})"
-today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $3}')
-if [[ $today < $Exp1 ]]; then
-sts="${Info}"
-else
-sts="${Error}"
-fi
-echo -e "\e[32mloading...\e[0m"
-clear
-# REPO    
-    REPO="https://raw.githubusercontent.com/gedozew/itek-pn/main/"
+# Repo
+REPO="https://raw.githubusercontent.com/gedozew/itek-pn/main/"
 
-####
-start=$(date +%s)
-secs_to_human() {
-    echo "Installation time : $((${1} / 3600)) hours $(((${1} / 60) % 60)) minute's $((${1} % 60)) seconds"
-}
-### Status
+# Cetak fungsi
 function print_ok() {
     echo -e "${OK} ${BLUE} $1 ${FONT}"
 }
@@ -150,11 +137,9 @@ function print_install() {
 	echo -e "${green} =============================== ${FONT}"
     sleep 1
 }
-
 function print_error() {
     echo -e "${ERROR} ${REDBG} $1 ${FONT}"
 }
-
 function print_success() {
     if [[ 0 -eq $? ]]; then
 		echo -e "${green} =============================== ${FONT}"
@@ -163,15 +148,13 @@ function print_success() {
         sleep 2
     fi
 }
-
-### Cek root
 function is_root() {
     if [[ 0 == "$UID" ]]; then
-        print_ok "Root user Start installation process"
+        print_ok "Root user memulai instalasi"
     else
-        print_error "The current user is not the root user, please switch to the root user and run the script again"
+        print_error "Harus dijalankan sebagai root"
+        exit 1
     fi
-
 }
 
 # Buat direktori xray
