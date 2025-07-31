@@ -106,10 +106,15 @@ username=$(cat /usr/bin/user)
 oid=$(cat /usr/bin/ver)
 exp=$(cat /usr/bin/e)
 clear
+# TANGGAL HARI INI
+today=$(date +"%Y-%m-%d")
+
 # CERTIFICATE STATUS
-d1=$(date -d "$valid" +%s)
+exp=$(cat /usr/bin/e)
+d1=$(date -d "$exp" +%s)
 d2=$(date -d "$today" +%s)
 certifacate=$(((d1 - d2) / 86400))
+
 # VPS Information
 DATE=$(date +'%Y-%m-%d')
 datediff() {
@@ -117,18 +122,29 @@ datediff() {
     d2=$(date -d "$2" +%s)
     echo -e "$COLOR1 $NC Expiry In   : $(( (d1 - d2) / 86400 )) Days"
 }
-mai="datediff "$Exp" "$DATE""
+mai="datediff \"$exp\" \"$DATE\""
 
 # Status ExpiRED Active | Geo Project
 Info="(${green}Active${NC})"
 Error="(${RED}ExpiRED${NC})"
-today=`date -d "0 days" +"%Y-%m-%d"`
-Exp1=$(curl https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $4}')
-if [[ $today < $Exp1 ]]; then
-sts="${Info}"
+Exp1=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP | awk '{print $4}')
+
+if [[ "$today" < "$Exp1" ]]; then
+    sts="${Info}"
 else
-sts="${Error}"
+    sts="${Error}"
+    clear
+    echo -e "\e[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m"
+    echo -e "\e[31m ❌ SCRIPT ANDA TELAH EXPIRED! ❌ \e[0m"
+    echo -e "\e[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m"
+    echo -e "Tanggal Expired: ${Exp1}"
+    echo -e "Silakan hubungi admin untuk memperpanjang lisensi."
+    echo -e "WA: https://wa.me/628XXXXXXXXXX"
+    echo -e "\e[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m"
+    read -p "Tekan Enter untuk keluar..."
+    exit 1
 fi
+
 echo -e "\e[32mloading...\e[0m"
 clear
 # REPO    
