@@ -1,101 +1,96 @@
 #!/bin/bash
-### Color & Preparation
+# ================= Persiapan Awal ====================
 apt update -y && apt upgrade -y
-apt install curl -y
-apt install wondershaper -y
+apt install curl wondershaper -y
+
+# ================= Warna Terminal ====================
 Green="\e[92;1m"
 RED="\033[31m"
 YELLOW="\033[33m"
 BLUE="\033[36m"
 FONT="\033[0m"
-GREENBG="\033[42;37m"
-REDBG="\033[41;37m"
 OK="${Green}--->${FONT}"
 ERROR="${RED}[ERROR]${FONT}"
 GRAY="\e[1;30m"
 NC='\e[0m'
+green='\e[0;32m'
 
-# Info Telegram
+# ================= Info Telegram =====================
 CHATID="6617783693"
-KEY="6751589620:AAHwjP6dzZhuqeyUOdYFc6742Q1YUVF1EjM"
+KEY="TOKEN_BOT_ANDA"
 URL="https://api.telegram.org/bot$KEY/sendMessage"
 
-# Cek IP
+# ================= Cek IP VPS ========================
 MYIP=$(curl -sS ipv4.icanhazip.com)
 clear
 if [[ -z "$MYIP" ]]; then
-    echo -e "${ERROR} IP Address ( ${YELLOW}Not Detected${NC} )"
+    echo -e "${ERROR} IP Address tidak terdeteksi"
     exit 1
 else
-    echo -e "${OK} IP Address ( ${green}$MYIP${NC} )"
+    echo -e "${OK} IP VPS terdeteksi: ${green}$MYIP${NC}"
 fi
 
-# Validasi Lisensi
+# ================= Validasi Lisensi ==================
 today=$(date -d "0 days" +"%Y-%m-%d")
-cekdata=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep $MYIP)
-username=$(echo "$cekdata" | awk '{print $2}')
-expdate=$(echo "$cekdata" | awk '{print $3}')
+cekdata=$(curl -s https://raw.githubusercontent.com/gedozew/Regist/main/afk | grep -w "$MYIP")
 
-if [[ -z "$expdate" ]]; then
-    echo -e "${RED} IP Tidak Terdaftar!${NC}"
+if [[ -z "$cekdata" ]]; then
+    echo -e "${RED} IP $MYIP tidak terdaftar dalam lisensi!${NC}"
     exit 1
 fi
+
+username=$(echo "$cekdata" | awk '{print $2}')
+expdate=$(echo "$cekdata" | awk '{print $3}')
 
 if [[ "$today" > "$expdate" ]]; then
     echo -e "${RED}─────────────────────────────${NC}"
     echo -e "${RED}   ❌ SCRIPT SUDAH EXPIRED ❌   ${NC}"
     echo -e "${RED}─────────────────────────────${NC}"
-    echo -e "Silakan perpanjang lisensi ke @LunaticTunnel atau @LNTC_BOT"
+    echo -e "Silakan hubungi @LunaticTunnel untuk memperpanjang lisensi."
     exit 1
 fi
 
-# Hitung Sisa Hari Aktif
+# ================= Hitung Sisa Hari ==================
 d1=$(date -d "$expdate" +%s)
 d2=$(date -d "$today" +%s)
 sisa_hari=$(( (d1 - d2) / 86400 ))
 
-# Simpan Data User & Expired
+# ================= Simpan Info Lokal =================
 echo "$username" > /usr/bin/user
 echo "$expdate" > /usr/bin/e
 
-# Tampilkan Status
+# ================= Tampilkan Info ====================
 echo -e "${OK} Username  : ${green}$username${NC}"
 echo -e "${OK} Expired   : ${green}$expdate${NC}"
 echo -e "${OK} Sisa Hari : ${green}$sisa_hari Hari${NC}"
 
-# Tampilkan prompt
-read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} Untuk melanjutkan instalasi") "
+read -p "$( echo -e "Tekan ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} untuk melanjutkan...") "
 clear
 
-# Cek Root dan OpenVZ
-if [ "${EUID}" -ne 0 ]; then
-    echo -e "${ERROR} Harus dijalankan sebagai root"
-    exit 1
-fi
-if [ "$(systemd-detect-virt)" == "openvz" ]; then
-    echo -e "${ERROR} OpenVZ tidak didukung"
+# ================= Cek Akses Root ====================
+if [[ "$EUID" -ne 0 ]]; then
+    echo -e "${ERROR} Harus dijalankan sebagai root!"
     exit 1
 fi
 
-# Informasi VPS
-tanggal=$(date -d "0 days" +"%d-%m-%Y - %X")
-OS_Name=$(grep -w PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
-Kernel=$(uname -r)
-Arch=$(uname -m)
+# ================= Deteksi Virtualisasi ==============
+if [[ "$(systemd-detect-virt)" == "openvz" ]]; then
+    echo -e "${ERROR} OpenVZ tidak didukung!"
+    exit 1
+fi
 
-# Simpan IP VPS
+# ================= Simpan IP ke Xray ==================
 mkdir -p /etc/xray
 echo "$MYIP" > /etc/xray/ipvps
 
-# Cetak informasi awal
+# ================= Banner ============================
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 echo -e "  Welcome To Aburifat ${YELLOW}(${NC}${green} Stable Edition ${NC}${YELLOW})${NC}"
-echo -e " This Will Quick Setup VPN Server On Your Server"
-echo -e "  Author : ${green}CyberSufi ${NC}${YELLOW}(${NC}${green} CyberSufi${NC}${YELLOW})${NC}"
-echo -e " © Recode By Mod CyberSufi ${YELLOW}(2025)${NC}"
+echo -e "  Author : ${green}CyberSufi${NC}"
+echo -e "  Recode : ${green}Mod CyberSufi 2025${NC}"
 echo -e "${YELLOW}----------------------------------------------------------${NC}"
 
-# Lanjut ke instalasi lainnya...
+# ================== Lanjutkan Proses Instalasi... ==================
 # Buat direktori xray
 print_install "Membuat direktori xray"
     mkdir -p /etc/xray
